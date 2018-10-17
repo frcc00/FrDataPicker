@@ -194,6 +194,12 @@ class PickerState extends State<Picker> {
       FixedExtentScrollController();
 
   Timer timer;
+  
+  @override
+  void dispose() {
+    fixedExtentScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
