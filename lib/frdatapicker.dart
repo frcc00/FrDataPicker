@@ -8,26 +8,29 @@ typedef DataSourceCallback = List<String> Function(int columnIndex);
 class FrDataPicker extends StatefulWidget {
   FrDataPicker(
       {Key key,
-      @required this.itemCount,
-      @required this.dataSourceCallback,
-      this.itemTitles,
-      this.okBtnTitle,
-      this.cancelBtnTitle,
-      this.okBtnClicked,
-      this.cancelBtnClicked,
-      @required this.onSelectedItemChanged,
-      this.hideToolBar})
+        @required this.itemCount,
+        @required this.dataSourceCallback,
+        this.itemTitles,
+        this.okBtnTitle,
+        this.cancelBtnTitle,
+        this.okBtnClicked,
+        this.cancelBtnClicked,
+        this.initialItems,
+        @required this.onSelectedItemChanged,
+        this.hideToolBar})
       : assert(dataSourceCallback != null),
         assert(onSelectedItemChanged != null),
         super(key: key);
 
-  int itemCount = 0;
-  List<String> itemTitles = [];
+  int itemCount;
+  List<String> itemTitles;
 
-  String cancelBtnTitle = '';
-  String okBtnTitle = '';
+  String cancelBtnTitle;
+  String okBtnTitle;
 
   bool hideToolBar;
+
+  List<int> initialItems;
 
   DataSourceCallback dataSourceCallback;
   Function(int index, int columnIndex,
@@ -54,10 +57,10 @@ class FrDataPickerState extends State<FrDataPicker> {
   void initState() {
     super.initState();
     widget.itemTitles = widget.itemTitles ?? [];
+    widget.initialItems = widget.initialItems ?? [];
   }
 
   needReloadColumns(List<int> columnIndexs) {
-    print("needReloadColumns");
     columnIndexs.forEach((int columnIndex) {
       try{
         Picker picker = pickers[columnIndex];
@@ -72,6 +75,10 @@ class FrDataPickerState extends State<FrDataPicker> {
   }
 
   _getPickerContainer(double _width, int columnIndex) {
+    int initialItem = 0;
+    try{
+      initialItem = widget.initialItems[columnIndex];
+    }catch(_){};
     Picker picker = Picker(
       width: _width,
       cellHeight: widget._cellHeight,
@@ -79,6 +86,7 @@ class FrDataPickerState extends State<FrDataPicker> {
       columnIndex: columnIndex,
       selectedChanged: _pickerSelectedChanged,
       dataSourceCallback: widget.dataSourceCallback,
+      initialItem: initialItem,
     );
     pickers.add(picker);
     return picker;
@@ -141,32 +149,33 @@ class FrDataPickerState extends State<FrDataPicker> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-      var itemWidth = constraints.constrainWidth() / widget.itemCount ?? 1;
-      return Column(
-        children: <Widget>[
-          _getToolBar(),
+          var itemWidth = constraints.constrainWidth() / widget.itemCount ?? 1;
+          return Column(
+              children: <Widget>[
+              _getToolBar(),
           _getTitles(itemWidth),
           Expanded(
-              child: Row(
-            children: List<Widget>.generate(widget.itemCount ?? 1, (int index) {
-              return _getPickerContainer(itemWidth, index);
-            }),
+          child: Row(
+          children: List<Widget>.generate(widget.itemCount ?? 1, (int index) {
+          return _getPickerContainer(itemWidth, index);
+          }),
           )),
-        ],
-      );
-    });
+          ],
+          );
+          });
   }
 }
 
 class Picker extends StatefulWidget {
   Picker(
       {Key key,
-      @required this.width,
-      @required this.cellHeight,
-      @required this.fontSize,
-      @required this.columnIndex,
-      @required this.selectedChanged,
-      @required this.dataSourceCallback})
+        @required this.width,
+        @required this.cellHeight,
+        @required this.fontSize,
+        @required this.columnIndex,
+        @required this.selectedChanged,
+        @required this.dataSourceCallback,
+        @required this.initialItem})
       : assert(dataSourceCallback != null),
         super(key: key);
 
@@ -174,13 +183,14 @@ class Picker extends StatefulWidget {
   var cellHeight;
   var fontSize;
   var columnIndex;
+  var initialItem;
   Function(int index, int columnIndex) selectedChanged;
   DataSourceCallback dataSourceCallback;
 
   PickerState pickerState;
 
   reload() {
-    pickerState.setState((){});
+    pickerState.reload();
   }
 
   @override
@@ -190,11 +200,23 @@ class Picker extends StatefulWidget {
 }
 
 class PickerState extends State<Picker> {
-  FixedExtentScrollController fixedExtentScrollController =
-      FixedExtentScrollController();
+  FixedExtentScrollController fixedExtentScrollController;
 
   Timer timer;
-  
+  int cacheIndex = 0;
+
+  reload() {
+    setState(() {
+      cacheIndex = 0;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    cacheIndex = widget.initialItem;
+  }
+
   @override
   void dispose() {
     fixedExtentScrollController.dispose();
@@ -203,15 +225,21 @@ class PickerState extends State<Picker> {
 
   @override
   Widget build(BuildContext context) {
+    if(fixedExtentScrollController != null){
+      fixedExtentScrollController.dispose();
+    }
+    fixedExtentScrollController =
+        FixedExtentScrollController(initialItem: cacheIndex);
     List<String> data = widget.dataSourceCallback(widget.columnIndex);
-
     return Container(
       width: widget.width,
       child: CupertinoPicker(
+          key: GlobalKey(),
           scrollController: fixedExtentScrollController,
           itemExtent: widget.cellHeight,
           backgroundColor: CupertinoColors.white,
           onSelectedItemChanged: (int index) {
+            cacheIndex = index;
             if (timer == null) {
               timer = Timer(Duration(milliseconds: 500), () {
                 widget.selectedChanged(index, widget.columnIndex);
