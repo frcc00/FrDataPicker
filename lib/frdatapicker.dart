@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
+import 'package:auto_size_text/auto_size_text.dart';
+
 typedef DataSourceCallback = List<String> Function(int columnIndex);
 
 class FrDataPicker extends StatefulWidget {
@@ -253,9 +255,10 @@ class PickerState extends State<Picker> {
           },
           children: List<Widget>.generate(data.length, (int index) {
         return Center(
-          child: Text(
+          child: AutoSizeText(
             data[index] ?? "",
             style: TextStyle(fontSize: widget.fontSize),
+            maxLines: 1,
           ),
         );
       }),
