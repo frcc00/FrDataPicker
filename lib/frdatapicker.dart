@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'package:auto_size_text/auto_size_text.dart';
-
 typedef DataSourceCallback = List<String> Function(int columnIndex);
 
 class FrDataPicker extends StatefulWidget {
@@ -15,8 +13,6 @@ class FrDataPicker extends StatefulWidget {
         this.itemTitles = const [],
         this.okBtnTitle,
         this.cancelBtnTitle,
-        this.okBtnClicked,
-        this.cancelBtnClicked,
         this.initialItems = const [],
         @required this.onSelectedItemChanged,
         this.hideToolBar})
@@ -38,9 +34,6 @@ class FrDataPicker extends StatefulWidget {
   Function(int index, int columnIndex,
       Function(List<int> columnIndexs) needReloadColumns) onSelectedItemChanged;
 
-  VoidCallback cancelBtnClicked;
-  VoidCallback okBtnClicked;
-
   final double _cellHeight = 36.0;
   final double _fontSize = 20.0;
   final double _titleHeight = 36.0;
@@ -55,11 +48,13 @@ class FrDataPicker extends StatefulWidget {
 class FrDataPickerState extends State<FrDataPicker> {
   List<Picker> pickers = List<Picker>();
 
+  var _index;
+  var _columnIndex;
+
   @override
   void initState() {
     super.initState();
-    widget.itemTitles = widget.itemTitles ?? [];
-    widget.initialItems = widget.initialItems ?? [];
+    _index = widget.initialItems[0];
   }
 
   needReloadColumns(List<int> columnIndexs) {
@@ -73,7 +68,8 @@ class FrDataPickerState extends State<FrDataPicker> {
   }
 
   _pickerSelectedChanged(int index, int columnIndex) {
-    widget.onSelectedItemChanged(index, columnIndex, needReloadColumns);
+    _index = index;
+    _columnIndex = columnIndex;
   }
 
   _getPickerContainer(double _width, int columnIndex) {
@@ -106,15 +102,20 @@ class FrDataPickerState extends State<FrDataPicker> {
           Container(
             width: 5.0,
           ),
-          RaisedButton(
-            onPressed: widget.cancelBtnClicked,
+          FlatButton(
+            onPressed: (){
+              Navigator.pop(context);
+            },
             child: Text(widget.cancelBtnTitle ?? "cancel"),
           ),
           Expanded(
             child: Container(),
           ),
-          RaisedButton(
-            onPressed: widget.okBtnClicked,
+          FlatButton(
+            onPressed: (){
+              widget.onSelectedItemChanged(_index, _columnIndex, needReloadColumns);
+              Navigator.pop(context);
+            },
             child: Text(widget.okBtnTitle ?? 'OK'),
           ),
           Container(
@@ -153,18 +154,18 @@ class FrDataPickerState extends State<FrDataPicker> {
         builder: (BuildContext context, BoxConstraints constraints) {
           var itemWidth = constraints.constrainWidth() / widget.itemCount ?? 1;
           return Column(
-              children: <Widget>[
+            children: <Widget>[
               _getToolBar(),
-          _getTitles(itemWidth),
-          Expanded(
-          child: Row(
-          children: List<Widget>.generate(widget.itemCount ?? 1, (int index) {
-          return _getPickerContainer(itemWidth, index);
-          }),
-          )),
-          ],
+              _getTitles(itemWidth),
+              Expanded(
+                  child: Row(
+                    children: List<Widget>.generate(widget.itemCount ?? 1, (int index) {
+                      return _getPickerContainer(itemWidth, index);
+                    }),
+                  )),
+            ],
           );
-          });
+        });
   }
 }
 
@@ -236,33 +237,33 @@ class PickerState extends State<Picker> {
     return Container(
       width: widget.width,
       child: CupertinoPicker(
-          key: GlobalKey(),
-          scrollController: fixedExtentScrollController,
-          itemExtent: widget.cellHeight,
-          backgroundColor: CupertinoColors.white,
-          onSelectedItemChanged: (int index) {
-            cacheIndex = index;
-            if (timer == null) {
-              timer = Timer(Duration(milliseconds: 500), () {
-                widget.selectedChanged(index, widget.columnIndex);
-              });
-            } else {
-              timer.cancel();
-              timer = Timer(Duration(milliseconds: 500), () {
-                widget.selectedChanged(index, widget.columnIndex);
-              });
-            }
-          },
-          children: List<Widget>.generate(data.length, (int index) {
-        return Center(
-          child: AutoSizeText(
-            data[index] ?? "",
-            style: TextStyle(fontSize: widget.fontSize),
-            maxLines: 1,
-          ),
-        );
-      }),
-    ),
+        key: GlobalKey(),
+        scrollController: fixedExtentScrollController,
+        itemExtent: widget.cellHeight,
+        backgroundColor: CupertinoColors.white,
+        onSelectedItemChanged: (int index) {
+          cacheIndex = index;
+          if (timer == null) {
+            timer = Timer(Duration(milliseconds: 500), () {
+              widget.selectedChanged(index, widget.columnIndex);
+            });
+          } else {
+            timer.cancel();
+            timer = Timer(Duration(milliseconds: 500), () {
+              widget.selectedChanged(index, widget.columnIndex);
+            });
+          }
+        },
+        children: List<Widget>.generate(data.length, (int index) {
+          return Center(
+            child: Text(
+              data[index] ?? "",
+              style: TextStyle(fontSize: widget.fontSize),
+              maxLines: 1,
+            ),
+          );
+        }),
+      ),
     );
   }
 }
