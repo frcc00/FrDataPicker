@@ -17,17 +17,24 @@ dependencies:
 
 ```
 
-![image](https://github.com/frcc00/AriaNg-apk/blob/master/QQ20181016-123620.gif)
 
 ```
+class AddressPicker {
   ///省
   static var _sArr = [];
   ///市
   static var _cArr = [];
   ///区
   static var _qArr = [];
-  
-  if(_sArr.isEmpty){
+
+  static showAddressPicker(context) async{
+    Completer completer = Completer();
+    _show(completer,context);
+    return completer.future;
+  }
+
+  static _show(Completer completer,context) async{
+    if(_sArr.isEmpty){
       var data = await HttpPart1().getAllProvince();
       _sArr = data['data'];
     }
@@ -39,7 +46,7 @@ dependencies:
       var data = await HttpPart1().getChildById(_cArr.first['id'].toString());
       _qArr = data['data'];
     }
-    
+
     showModalBottomSheet(context: context, builder: (c){
       return FrDataPicker(
         itemCount: 3,
@@ -75,7 +82,74 @@ dependencies:
           var si = list[0];
           var ci = list[1];
           var qi = list[2];
+          var sData = {};
+          var cData = {};
+          var qData = {};
+          try{
+            sData = _sArr[si];
+          }catch(_){}
+          try{
+            cData = _cArr[ci];
+          }catch(_){}
+          try{
+            qData = _qArr[qi];
+          }catch(_){}
+          completer.complete(AddressPickerResult(
+            provinceId: (sData['id']??'').toString(),
+            provinceName: sData['name']??'',
+            cityId: (cData['id']??"").toString(),
+            cityName: cData['name']??"",
+            areaId: (qData['id']??"").toString(),
+            areaName: qData['name']??"",
+          ));
         },
       );
     });
+  }
+}
+
+/// CityPicker 返回的 **Result** 结果函数
+class AddressPickerResult {
+  /// provinceId
+  String provinceId;
+
+  /// cityId
+  String cityId;
+
+  /// areaId
+  String areaId;
+
+  /// provinceName
+  String provinceName;
+
+  /// cityName
+  String cityName;
+
+  /// areaName
+  String areaName;
+
+  AddressPickerResult(
+      {this.provinceId,
+        this.cityId,
+        this.areaId,
+        this.provinceName,
+        this.cityName,
+        this.areaName});
+
+  /// string json
+  @override
+  String toString() {
+    Map<String, dynamic> obj = {
+      'provinceName': provinceName,
+      'provinceId': provinceId,
+      'cityName': cityName,
+      'cityId': cityId,
+      'areaName': areaName,
+      'areaId': areaId
+    };
+    obj.removeWhere((key, value) => value == null);
+
+    return json.encode(obj);
+  }
+}
 ```
