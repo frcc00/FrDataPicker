@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,6 +16,7 @@ class FrDataPicker extends StatefulWidget {
         this.cancelBtnTitle,
         this.initialItems = const [],
         @required this.onSelectedItemChanged,
+        @required this.onDone,
         this.hideToolBar})
       : assert(dataSourceCallback != null),
         assert(onSelectedItemChanged != null),
@@ -30,9 +32,10 @@ class FrDataPicker extends StatefulWidget {
 
   List<int> initialItems;
 
+  Function(List<int> selectedList) onDone;
+
   DataSourceCallback dataSourceCallback;
-  Function(int index, int columnIndex,
-      Function(List<int> columnIndexs) needReloadColumns) onSelectedItemChanged;
+  Function(int index, int columnIndex, Function(List<int> columnIndexs) needReloadColumns) onSelectedItemChanged;
 
   final double _cellHeight = 36.0;
   final double _fontSize = 20.0;
@@ -48,13 +51,16 @@ class FrDataPicker extends StatefulWidget {
 class FrDataPickerState extends State<FrDataPicker> {
   List<Picker> pickers = List<Picker>();
 
-  var _index;
-  var _columnIndex;
+  List<int> selectedList = [];
 
   @override
   void initState() {
     super.initState();
-    _index = widget.initialItems[0];
+    if(widget.initialItems.isNotEmpty){
+      selectedList = widget.initialItems;
+    }else{
+      selectedList = List.generate(widget.itemCount, (i)=>0);
+    }
   }
 
   needReloadColumns(List<int> columnIndexs) {
@@ -63,20 +69,20 @@ class FrDataPickerState extends State<FrDataPicker> {
         Picker picker = pickers[columnIndex];
         picker.reload();
       }catch(_){
-      };
+      }
     });
   }
 
   _pickerSelectedChanged(int index, int columnIndex) {
-    _index = index;
-    _columnIndex = columnIndex;
+    selectedList[columnIndex] = index;
+    widget.onSelectedItemChanged(index, columnIndex, needReloadColumns);
   }
 
   _getPickerContainer(double _width, int columnIndex) {
     int initialItem = 0;
     try{
       initialItem = widget.initialItems[columnIndex];
-    }catch(_){};
+    }catch(_){}
     Picker picker = Picker(
       width: _width,
       cellHeight: widget._cellHeight,
@@ -113,7 +119,7 @@ class FrDataPickerState extends State<FrDataPicker> {
           ),
           FlatButton(
             onPressed: (){
-              widget.onSelectedItemChanged(_index, _columnIndex, needReloadColumns);
+              widget.onDone(selectedList);
               Navigator.pop(context);
             },
             child: Text(widget.okBtnTitle ?? 'OK'),
