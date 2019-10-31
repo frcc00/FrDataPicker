@@ -20,40 +20,62 @@ dependencies:
 ![image](https://github.com/frcc00/AriaNg-apk/blob/master/QQ20181016-123620.gif)
 
 ```
-  var column1Data = ['A1','A2','A3','A4'];
-  var column2Data = ['B1','B2','B3','B4'];
-
-  var columnChangeData = ['C1','C2','C3','C4','C5'];
-
-  List<String> dataSourceCallback(int i){
-    if(i==1){
-      return column2Data;
+  ///省
+  static var _sArr = [];
+  ///市
+  static var _cArr = [];
+  ///区
+  static var _qArr = [];
+  
+  if(_sArr.isEmpty){
+      var data = await HttpPart1().getAllProvince();
+      _sArr = data['data'];
     }
-    return column1Data;
-  }
-
-  onSelectedItemChanged(int index, int columnIndex, Function(List<int> columnIndexs) needReloadColumns){
-    column2Data = columnChangeData;
-    print(index.toString() + ":" + columnIndex.toString());
-    if(columnIndex==0){
-      needReloadColumns([1]);
+    if(_cArr.isEmpty){
+      var data = await HttpPart1().getChildById(_sArr.first['id'].toString());
+      _cArr = data['data'];
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return new MaterialApp(
-      home: new Scaffold(
-        appBar: new AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: new Center(
-          child: Container(
-            height: 300.0,
-            child: FrDataPicker(itemCount: 2,itemTitles: ['A','B'],dataSourceCallback: dataSourceCallback,onSelectedItemChanged: onSelectedItemChanged,),
-          ),
-        ),
-      ),
-    );
-  }
+    if(_qArr.isEmpty){
+      var data = await HttpPart1().getChildById(_cArr.first['id'].toString());
+      _qArr = data['data'];
+    }
+    
+    showModalBottomSheet(context: context, builder: (c){
+      return FrDataPicker(
+        itemCount: 3,
+        cancelBtnTitle: '取消',
+        okBtnTitle: '确定',
+        dataSourceCallback: (i){
+          if(i==0){
+            return _sArr.map<String>((v)=>v['name']).toList();
+          }
+          if(i==1){
+            return _cArr.map<String>((v)=>v['name']).toList();
+          }
+          return _qArr.map<String>((v)=>v['name']).toList();
+        },
+        onSelectedItemChanged: (int index, int columnIndex, Function(List<int> columnIndexs) needReloadColumns)async{
+          if(columnIndex == 0){
+            var data = await HttpPart1().getChildById(_sArr[index]['id'].toString());
+            _cArr = data['data'];
+            _qArr = [];
+            if(_cArr.isNotEmpty){
+              var data1 = await HttpPart1().getChildById(_cArr.first['id'].toString());
+              _qArr = data1['data'];
+            }
+            needReloadColumns([1,2]);
+          }
+          if(columnIndex == 1){
+            var data1 = await HttpPart1().getChildById(_cArr[index]['id'].toString());
+            _qArr = data1['data'];
+            needReloadColumns([2]);
+          }
+        },
+        onDone: (list){
+          var si = list[0];
+          var ci = list[1];
+          var qi = list[2];
+        },
+      );
+    });
 ```
