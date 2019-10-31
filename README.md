@@ -108,7 +108,6 @@ class AddressPicker {
   }
 }
 
-/// CityPicker 返回的 **Result** 结果函数
 class AddressPickerResult {
   /// provinceId
   String provinceId;
