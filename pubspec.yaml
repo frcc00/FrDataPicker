@@ -1,8 +1,8 @@
 name: frdatapicker
-description: A new Flutter plugin.
-version: 0.0.3
-author:
-homepage:
+description: pick data like UIPickerView, can get data from net when index changed.
+version: 1.0.1
+author: frcc <573316072@qq.com>
+homepage: https://github.com/frcc00/frdatapicker
 
 environment:
   sdk: ">=2.0.0-dev.68.0 <3.0.0"
@@ -10,7 +10,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  auto_size_text: any
 
 # For information on the generic Dart part of this file, see the
 # following page: https://www.dartlang.org/tools/pub/pubspec

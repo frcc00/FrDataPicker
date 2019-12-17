@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -22,20 +21,20 @@ class FrDataPicker extends StatefulWidget {
         assert(onSelectedItemChanged != null),
         super(key: key);
 
-  int itemCount;
-  List<String> itemTitles;
+  final int itemCount;
+  final List<String> itemTitles;
 
-  String cancelBtnTitle;
-  String okBtnTitle;
+  final String cancelBtnTitle;
+  final String okBtnTitle;
 
-  bool hideToolBar;
+  final bool hideToolBar;
 
-  List<int> initialItems;
+  final List<int> initialItems;
 
-  Function(List<int> selectedList) onDone;
+  final Function(List<int> selectedList) onDone;
 
-  DataSourceCallback dataSourceCallback;
-  Function(int index, int columnIndex, Function(List<int> columnIndexs) needReloadColumns) onSelectedItemChanged;
+  final DataSourceCallback dataSourceCallback;
+  final Function(int index, int columnIndex, Function(List<int> columnIndexs) needReloadColumns) onSelectedItemChanged;
 
   final double _cellHeight = 36.0;
   final double _fontSize = 20.0;
@@ -175,6 +174,7 @@ class FrDataPickerState extends State<FrDataPicker> {
   }
 }
 
+// ignore: must_be_immutable
 class Picker extends StatefulWidget {
   Picker(
       {Key key,
@@ -188,13 +188,13 @@ class Picker extends StatefulWidget {
       : assert(dataSourceCallback != null),
         super(key: key);
 
-  var width;
-  var cellHeight;
-  var fontSize;
-  var columnIndex;
-  var initialItem;
-  Function(int index, int columnIndex) selectedChanged;
-  DataSourceCallback dataSourceCallback;
+  final width;
+  final cellHeight;
+  final fontSize;
+  final columnIndex;
+  final initialItem;
+  final Function(int index, int columnIndex) selectedChanged;
+  final DataSourceCallback dataSourceCallback;
 
   PickerState pickerState;
 
